@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { TileType, PlantedCrop } from '../types';
+import { CROPS } from '../data/items';
 
 const TILE_SIZE = 32;
 const MAP_WIDTH = 30;
@@ -180,7 +181,8 @@ export class FarmMap {
       tileY: tileY,
       stage: 'seed',
       currentDay: currentDay,
-      plantedDay: currentDay
+      plantedDay: currentDay,
+      growthProgress: 0
     };
 
     this.plantedCrops.set(key, crop);
@@ -224,20 +226,31 @@ export class FarmMap {
     this.plantedCrops.delete(key);
   }
 
-  advanceDay(currentDay: number): void {
+  advanceDay(currentDay: number, growthMultiplier: number = 1): void {
     this.plantedCrops.forEach((crop) => {
-      this.updateCropGrowth(crop, currentDay);
+      this.updateCropGrowth(crop, currentDay, growthMultiplier);
     });
   }
 
-  private updateCropGrowth(crop: PlantedCrop, currentDay: number): void {
-    const daysSincePlanted = currentDay - crop.plantedDay;
+  private updateCropGrowth(crop: PlantedCrop, currentDay: number, growthMultiplier: number): void {
+    crop.growthProgress = (crop.growthProgress || 0) + growthMultiplier;
+    crop.currentDay = currentDay;
 
-    if (daysSincePlanted < 1) {
+    const cropData = CROPS[crop.cropId];
+    if (!cropData) {
       crop.stage = 'seed';
-    } else if (daysSincePlanted < 3) {
+      this.updateCropSprite(crop);
+      return;
+    }
+
+    const totalGrowthDays = cropData.daysPerStage * (cropData.growthStages - 1);
+    const progress = Math.min(crop.growthProgress, totalGrowthDays);
+
+    if (progress < cropData.daysPerStage) {
+      crop.stage = 'seed';
+    } else if (progress < cropData.daysPerStage * 2) {
       crop.stage = 'sprout';
-    } else if (daysSincePlanted < 5) {
+    } else if (progress < cropData.daysPerStage * 3) {
       crop.stage = 'growing';
     } else {
       crop.stage = 'mature';
@@ -294,6 +307,10 @@ export class FarmMap {
 
   loadCrops(crops: PlantedCrop[]): void {
     crops.forEach((crop) => {
+      if (crop.growthProgress === undefined) {
+        const daysSincePlanted = (crop.currentDay || crop.plantedDay) - crop.plantedDay;
+        crop.growthProgress = daysSincePlanted;
+      }
       const key = `${crop.tileX},${crop.tileY}`;
       this.plantedCrops.set(key, crop);
       this.createCropSprite(crop);

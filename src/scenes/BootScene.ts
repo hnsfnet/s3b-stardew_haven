@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TextureGenerator } from '../utils/TextureGenerator';
 import { INVENTORY_SIZE } from '../data/items';
-import type { InventorySlot, PlantedCrop } from '../types';
+import type { InventorySlot, PlantedCrop, Pet, WeatherState } from '../types';
 
 export class BootScene extends Phaser.Scene {
   private loadingBar!: Phaser.GameObjects.Graphics;
@@ -100,14 +100,24 @@ export class BootScene extends Phaser.Scene {
     inventory[0] = { itemId: 'potato_seed', quantity: 5 };
     inventory[1] = { itemId: 'carrot_seed', quantity: 3 };
     inventory[2] = { itemId: 'pumpkin_seed', quantity: 2 };
+    inventory[3] = { itemId: 'pet_food', quantity: 3 };
 
     const plantedCrops: PlantedCrop[] = [];
+    const pets: Pet[] = [];
+
+    const weather: WeatherState = {
+      current: 'sunny',
+      yesterday: 'sunny',
+      transitioning: false
+    };
 
     this.registry.set('gold', 100);
     this.registry.set('day', 1);
     this.registry.set('time', 0);
     this.registry.set('inventory', inventory);
     this.registry.set('plantedCrops', plantedCrops);
+    this.registry.set('pets', pets);
+    this.registry.set('weather', weather);
     this.registry.set('selectedSeed', null);
     this.registry.set('gamePaused', false);
   }

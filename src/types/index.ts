@@ -1,4 +1,8 @@
-export type ItemType = 'seed' | 'crop' | 'tool';
+export type ItemType = 'seed' | 'crop' | 'tool' | 'pet' | 'pet_food';
+
+export type PetType = 'cat' | 'dog' | 'rabbit';
+
+export type WeatherType = 'sunny' | 'rainy' | 'storm';
 
 export interface Item {
   id: string;
@@ -8,6 +12,7 @@ export interface Item {
   sellPrice: number;
   icon: string;
   description: string;
+  petType?: PetType;
 }
 
 export type CropStage = 'seed' | 'sprout' | 'growing' | 'mature';
@@ -31,6 +36,7 @@ export interface PlantedCrop {
   stage: CropStage;
   currentDay: number;
   plantedDay: number;
+  growthProgress: number;
 }
 
 export type TileType = 'grass' | 'tilled' | 'water' | 'fence' | 'path' | 'soil';
@@ -38,6 +44,23 @@ export type TileType = 'grass' | 'tilled' | 'water' | 'fence' | 'path' | 'soil';
 export interface InventorySlot {
   itemId: string | null;
   quantity: number;
+}
+
+export interface Pet {
+  id: string;
+  type: PetType;
+  name: string;
+  mood: number;
+  hunger: number;
+  isFollowing: boolean;
+  helpedToday: boolean;
+  lastFedDay: number;
+}
+
+export interface WeatherState {
+  current: WeatherType;
+  yesterday: WeatherType;
+  transitioning: boolean;
 }
 
 export interface GameState {
@@ -48,6 +71,8 @@ export interface GameState {
   plantedCrops: PlantedCrop[];
   tilledTiles: { x: number; y: number }[];
   selectedSeed: string | null;
+  pets: Pet[];
+  weather: WeatherState;
 }
 
 export interface Position {

@@ -7,6 +7,7 @@ export class TextureGenerator {
     this.generateCropTextures(scene);
     this.generateItemTextures(scene);
     this.generateNpcTexture(scene);
+    this.generatePetTextures(scene);
   }
 
   static generatePlayerTexture(scene: Phaser.Scene): void {
@@ -266,7 +267,8 @@ export class TextureGenerator {
       pumpkin_seed: { color: 0xff6f00, type: 'seed' },
       potato: { color: 0xc4a35a, type: 'crop' },
       carrot: { color: 0xff9800, type: 'crop' },
-      pumpkin: { color: 0xff9800, type: 'crop' }
+      pumpkin: { color: 0xff9800, type: 'crop' },
+      pet_food: { color: 0x8b4513, type: 'pet_food' }
     };
 
     Object.entries(items).forEach(([key, data]) => {
@@ -279,6 +281,17 @@ export class TextureGenerator {
         graphics.fillRect(10, 12, 4, 2);
         graphics.fillStyle(0x000000);
         graphics.fillRect(14, 15, 4, 2);
+      } else if (data.type === 'pet_food') {
+        graphics.fillStyle(0x8b4513);
+        graphics.fillRect(6, 14, 20, 14);
+        graphics.fillStyle(0xa0522d);
+        graphics.fillRect(8, 10, 16, 6);
+        graphics.fillStyle(0x000000);
+        graphics.fillRect(13, 6, 6, 6);
+        graphics.fillStyle(0xffffff);
+        graphics.fillRect(14, 17, 2, 2);
+        graphics.fillRect(18, 19, 2, 2);
+        graphics.fillRect(12, 22, 2, 2);
       } else {
         if (key === 'potato') {
           graphics.fillStyle(0xc4a35a);
@@ -344,5 +357,84 @@ export class TextureGenerator {
 
     graphics.generateTexture('npc', width, height);
     graphics.destroy();
+  }
+
+  static generatePetTextures(scene: Phaser.Scene): void {
+    const size = 32;
+
+    const catGraphics = scene.add.graphics();
+    catGraphics.fillStyle(0xffa500);
+    catGraphics.fillRect(8, 14, 16, 12);
+    catGraphics.fillStyle(0xff8c00);
+    catGraphics.fillRect(10, 6, 12, 10);
+    catGraphics.fillStyle(0xffa500);
+    catGraphics.fillRect(8, 4, 4, 6);
+    catGraphics.fillRect(20, 4, 4, 6);
+    catGraphics.fillStyle(0xffb6c1);
+    catGraphics.fillRect(9, 5, 2, 3);
+    catGraphics.fillRect(21, 5, 2, 3);
+    catGraphics.fillStyle(0x008000);
+    catGraphics.fillRect(12, 10, 2, 2);
+    catGraphics.fillRect(18, 10, 2, 2);
+    catGraphics.fillStyle(0xff69b4);
+    catGraphics.fillRect(15, 13, 2, 2);
+    catGraphics.fillStyle(0x000000);
+    catGraphics.fillRect(13, 15, 1, 1);
+    catGraphics.fillRect(18, 15, 1, 1);
+    catGraphics.fillStyle(0xff8c00);
+    catGraphics.fillRect(8, 26, 4, 4);
+    catGraphics.fillRect(20, 26, 4, 4);
+    catGraphics.fillStyle(0xffa500);
+    catGraphics.fillRect(22, 18, 6, 3);
+    catGraphics.fillRect(26, 15, 3, 6);
+    catGraphics.generateTexture('cat', size, size);
+    catGraphics.destroy();
+
+    const dogGraphics = scene.add.graphics();
+    dogGraphics.fillStyle(0x8b4513);
+    dogGraphics.fillRect(8, 14, 16, 12);
+    dogGraphics.fillStyle(0xa0522d);
+    dogGraphics.fillRect(9, 6, 14, 10);
+    dogGraphics.fillStyle(0x654321);
+    dogGraphics.fillRect(7, 4, 5, 8);
+    dogGraphics.fillRect(20, 4, 5, 8);
+    dogGraphics.fillStyle(0x000000);
+    dogGraphics.fillRect(12, 10, 2, 2);
+    dogGraphics.fillRect(18, 10, 2, 2);
+    dogGraphics.fillStyle(0x000000);
+    dogGraphics.fillRect(14, 13, 4, 3);
+    dogGraphics.fillStyle(0x8b4513);
+    dogGraphics.fillRect(10, 26, 4, 4);
+    dogGraphics.fillRect(18, 26, 4, 4);
+    dogGraphics.fillStyle(0xa0522d);
+    dogGraphics.fillRect(4, 16, 5, 4);
+    dogGraphics.fillStyle(0xffffff);
+    dogGraphics.fillRect(6, 12, 2, 4);
+    dogGraphics.generateTexture('dog', size, size);
+    dogGraphics.destroy();
+
+    const rabbitGraphics = scene.add.graphics();
+    rabbitGraphics.fillStyle(0xf5f5dc);
+    rabbitGraphics.fillRect(10, 16, 12, 10);
+    rabbitGraphics.fillStyle(0xffffff);
+    rabbitGraphics.fillRect(11, 8, 10, 10);
+    rabbitGraphics.fillStyle(0xf5f5dc);
+    rabbitGraphics.fillRect(10, 2, 4, 8);
+    rabbitGraphics.fillRect(18, 2, 4, 8);
+    rabbitGraphics.fillStyle(0xffb6c1);
+    rabbitGraphics.fillRect(11, 3, 2, 6);
+    rabbitGraphics.fillRect(19, 3, 2, 6);
+    rabbitGraphics.fillStyle(0xff0000);
+    rabbitGraphics.fillRect(13, 12, 2, 2);
+    rabbitGraphics.fillRect(17, 12, 2, 2);
+    rabbitGraphics.fillStyle(0xffb6c1);
+    rabbitGraphics.fillRect(15, 15, 2, 2);
+    rabbitGraphics.fillStyle(0xf5f5dc);
+    rabbitGraphics.fillRect(10, 26, 4, 4);
+    rabbitGraphics.fillRect(18, 26, 4, 4);
+    rabbitGraphics.fillStyle(0xffffff);
+    rabbitGraphics.fillRect(22, 20, 4, 3);
+    rabbitGraphics.generateTexture('rabbit', size, size);
+    rabbitGraphics.destroy();
   }
 }

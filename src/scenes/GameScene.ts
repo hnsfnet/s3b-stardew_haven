@@ -1,13 +1,19 @@
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { FarmMap } from '../entities/FarmMap';
+import { PetEntity } from '../entities/PetEntity';
+import { WeatherSystem } from '../systems/WeatherSystem';
 import { InventoryUI } from '../ui/InventoryUI';
-import { ITEMS, CROPS } from '../data/items';
-import type { InventorySlot, PlantedCrop } from '../types';
+import { WeatherUI } from '../ui/WeatherUI';
+import { ITEMS, CROPS, WEATHER_CONFIG } from '../data/items';
+import type { InventorySlot, PlantedCrop, Pet, PetType, WeatherType } from '../types';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
   private farmMap!: FarmMap;
+  private pets: PetEntity[] = [];
+  private weatherSystem!: WeatherSystem;
+  private weatherUI!: WeatherUI;
   private inventoryUI!: InventoryUI;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys!: {
@@ -60,12 +66,46 @@ export class GameScene extends Phaser.Scene {
     this.inventoryUI.setOnItemSelected((itemId) => {
       this.updateSelectedSeedText(itemId);
     });
+    this.inventoryUI.setOnFeedPet(() => this.feedNearestPet());
+
+    this.weatherSystem = new WeatherSystem(this);
+    this.weatherUI = new WeatherUI(this, this.weatherSystem);
 
     this.createHUD();
 
     this.loadGameData();
 
+    this.loadPetsFromRegistry();
+    this.weatherSystem.loadFromRegistry();
+
+    this.weatherSystem.updateParticlesPosition(
+      this.cameras.main.scrollX,
+      this.cameras.main.scrollY
+    );
+
     this.events.on('wake', this.onWake, this);
+  }
+
+  private loadPetsFromRegistry(): void {
+    const petDataList = this.registry.get('pets') as Pet[];
+    if (petDataList) {
+      for (const petData of petDataList) {
+        const pet = new PetEntity(
+          this,
+          this.player.x,
+          this.player.y + 20,
+          petData.type as PetType,
+          petData.name
+        );
+        pet.setData(petData);
+        this.pets.push(pet);
+      }
+    }
+  }
+
+  private savePetsToRegistry(): void {
+    const petDataList: Pet[] = this.pets.map((pet) => pet.getData());
+    this.registry.set('pets', petDataList);
   }
 
   private createInput(): void {
@@ -90,7 +130,7 @@ export class GameScene extends Phaser.Scene {
   private createHUD(): void {
     const { width } = this.scale;
 
-    this.dayTimeText = this.add.text(10, 10, '', {
+    this.dayTimeText = this.add.text(10, 50, '', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: 'Microsoft YaHei',
@@ -100,7 +140,7 @@ export class GameScene extends Phaser.Scene {
     this.dayTimeText.setScrollFactor(0);
     this.dayTimeText.setDepth(50);
 
-    this.goldText = this.add.text(width - 10, 10, '', {
+    this.goldText = this.add.text(width - 10, 50, '', {
       fontSize: '16px',
       color: '#ffd700',
       fontFamily: 'Microsoft YaHei',
@@ -111,7 +151,7 @@ export class GameScene extends Phaser.Scene {
     this.goldText.setScrollFactor(0);
     this.goldText.setDepth(50);
 
-    this.selectedSeedText = this.add.text(10, 35, '', {
+    this.selectedSeedText = this.add.text(10, 75, '', {
       fontSize: '14px',
       color: '#7cfc00',
       fontFamily: 'Microsoft YaHei',
@@ -191,6 +231,7 @@ export class GameScene extends Phaser.Scene {
   private tillSoil(tileX: number, tileY: number): void {
     if (this.farmMap.tillTile(tileX, tileY)) {
       this.showFloatingText('翻地！', tileX, tileY, '#ffd700');
+      this.saveGameData();
     }
   }
 
@@ -299,6 +340,44 @@ export class GameScene extends Phaser.Scene {
     this.isPaused = visible;
   }
 
+  private feedNearestPet(): boolean {
+    let nearestPet: PetEntity | null = null;
+    let nearestDistance = Infinity;
+
+    for (const pet of this.pets) {
+      const distance = Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        pet.x,
+        pet.y
+      );
+      if (distance < 80 && distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestPet = pet;
+      }
+    }
+
+    if (nearestPet) {
+      nearestPet.feed();
+      this.showFloatingText(
+        `${nearestPet.getData().name} 吃得很开心！`,
+        Math.floor(nearestPet.x / this.farmMap.getTileSize()),
+        Math.floor(nearestPet.y / this.farmMap.getTileSize()),
+        '#ff69b4'
+      );
+      this.saveGameData();
+      return true;
+    } else {
+      this.showFloatingText(
+        '附近没有宠物！',
+        Math.floor(this.player.x / this.farmMap.getTileSize()),
+        Math.floor(this.player.y / this.farmMap.getTileSize()),
+        '#ff6347'
+      );
+      return false;
+    }
+  }
+
   private openShop(): void {
     this.isPaused = true;
     this.scene.launch('ShopScene');
@@ -309,6 +388,33 @@ export class GameScene extends Phaser.Scene {
     this.isPaused = false;
     this.updateHUD();
     this.inventoryUI.updateInventoryUI();
+    this.checkNewPets();
+  }
+
+  private checkNewPets(): void {
+    const petDataList = this.registry.get('pets') as Pet[];
+    if (!petDataList) return;
+
+    for (const petData of petDataList) {
+      const exists = this.pets.some((p) => p.getData().id === petData.id);
+      if (!exists) {
+        const pet = new PetEntity(
+          this,
+          this.player.x,
+          this.player.y + 20,
+          petData.type as PetType,
+          petData.name
+        );
+        pet.setData(petData);
+        this.pets.push(pet);
+        this.showFloatingText(
+          `${petData.name} 加入了农场！`,
+          Math.floor(this.player.x / this.farmMap.getTileSize()),
+          Math.floor(this.player.y / this.farmMap.getTileSize()),
+          '#ffd700'
+        );
+      }
+    }
   }
 
   private checkNpcProximity(): void {
@@ -340,13 +446,85 @@ export class GameScene extends Phaser.Scene {
     const newDay = currentDay + 1;
     this.registry.set('day', newDay);
 
-    this.farmMap.advanceDay(newDay);
+    const weatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
+    this.farmMap.advanceDay(newDay, weatherConfig.growthMultiplier);
+
+    for (const pet of this.pets) {
+      pet.advanceDay();
+      if (pet.shouldHelpTill()) {
+        this.tryPetHelpTill(pet);
+      }
+    }
+
+    this.weatherSystem.advanceDay();
+
+    const newWeatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
+    if (newWeatherConfig.damageCrops) {
+      this.damageMatureCrops();
+    }
+
+    this.savePetsToRegistry();
 
     this.gameTime = 0;
+
+    this.weatherUI.showTransition();
 
     this.showDayTransition(newDay);
 
     this.saveGameData();
+  }
+
+  private tryPetHelpTill(pet: PetEntity): void {
+    const tileSize = this.farmMap.getTileSize();
+    const petTileX = Math.floor(pet.x / tileSize);
+    const petTileY = Math.floor(pet.y / tileSize);
+
+    const offsets = [
+      [-1, 0], [1, 0], [0, -1], [0, 1],
+      [-2, 0], [2, 0], [0, -2], [0, 2]
+    ];
+
+    Phaser.Utils.Array.Shuffle(offsets);
+
+    for (const [dx, dy] of offsets) {
+      const tx = petTileX + dx;
+      const ty = petTileY + dy;
+      if (
+        this.farmMap.isSoilTile(tx, ty) &&
+        !this.farmMap.isTilled(tx, ty) &&
+        !this.farmMap.hasCrop(tx, ty)
+      ) {
+        if (this.farmMap.tillTile(tx, ty)) {
+          pet.showHelpAnim();
+          this.showFloatingText(
+            `${pet.getData().name} 帮忙翻地了！`,
+            tx,
+            ty,
+            '#ffd700'
+          );
+          break;
+        }
+      }
+    }
+  }
+
+  private damageMatureCrops(): void {
+    const allCrops = this.farmMap.getAllCrops();
+    const matureCrops = allCrops.filter((crop) => {
+      const cropData = CROPS[crop.cropId];
+      const daysGrown = this.registry.get('day') - crop.plantedDay;
+      return daysGrown >= cropData.growthDays;
+    });
+
+    if (matureCrops.length === 0) return;
+
+    const damageCount = Phaser.Math.Between(1, 2);
+    const toDamage = Phaser.Utils.Array.Shuffle(matureCrops).slice(0, damageCount);
+
+    for (const crop of toDamage) {
+      this.farmMap.removeCrop(crop.tileX, crop.tileY);
+      this.showFloatingText('作物被暴风雨摧毁！', crop.tileX, crop.tileY, '#ff0000');
+    }
   }
 
   private showDayTransition(day: number): void {
@@ -392,6 +570,14 @@ export class GameScene extends Phaser.Scene {
           this.registry.set('inventory', data.inventory);
         }
 
+        if (data.pets) {
+          this.registry.set('pets', data.pets);
+        }
+
+        if (data.weather) {
+          this.registry.set('weather', data.weather);
+        }
+
         if (data.tilledTiles) {
           this.farmMap.loadTilledTiles(data.tilledTiles);
         }
@@ -408,10 +594,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private saveGameData(): void {
+    this.savePetsToRegistry();
+
     const data = {
       gold: this.registry.get('gold'),
       day: this.registry.get('day'),
       inventory: this.registry.get('inventory'),
+      pets: this.registry.get('pets'),
+      weather: this.registry.get('weather'),
       tilledTiles: this.farmMap.getTilledTiles(),
       plantedCrops: this.farmMap.getAllCrops()
     };
@@ -422,6 +612,9 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (this.isPaused) return;
 
+    const weatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
+    const speedMultiplier = weatherConfig.playerSpeedMultiplier;
+
     const directionInput = {
       up: this.wasdKeys.up.isDown || this.cursors.up?.isDown || false,
       down: this.wasdKeys.down.isDown || this.cursors.down?.isDown || false,
@@ -429,7 +622,18 @@ export class GameScene extends Phaser.Scene {
       right: this.wasdKeys.right.isDown || this.cursors.right?.isDown || false
     };
 
-    this.player.update(directionInput);
+    this.player.update(directionInput, speedMultiplier);
+
+    for (const pet of this.pets) {
+      pet.update(this.player.x, this.player.y, delta);
+    }
+
+    this.weatherSystem.update(delta);
+
+    this.weatherSystem.updateParticlesPosition(
+      this.cameras.main.scrollX,
+      this.cameras.main.scrollY
+    );
 
     this.checkNpcProximity();
 
@@ -442,5 +646,9 @@ export class GameScene extends Phaser.Scene {
 
     this.player.setDepth(Math.floor(this.player.y / 32) + 10);
     this.npc.setDepth(Math.floor(this.npc.y / 32) + 10);
+
+    for (const pet of this.pets) {
+      pet.setDepth(Math.floor(pet.y / 32) + 10);
+    }
   }
 }

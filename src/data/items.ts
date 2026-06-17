@@ -54,6 +54,45 @@ export const ITEMS: Record<string, Item> = {
     sellPrice: 100,
     icon: 'pumpkin',
     description: '大大的南瓜'
+  },
+  cat: {
+    id: 'cat',
+    name: '小猫咪',
+    type: 'pet',
+    price: 500,
+    sellPrice: 0,
+    icon: 'cat',
+    description: '一只可爱的小猫咪，心情好时会帮忙翻地',
+    petType: 'cat'
+  },
+  dog: {
+    id: 'dog',
+    name: '小狗狗',
+    type: 'pet',
+    price: 600,
+    sellPrice: 0,
+    icon: 'dog',
+    description: '一只忠诚的小狗狗，心情好时会帮忙翻地',
+    petType: 'dog'
+  },
+  rabbit: {
+    id: 'rabbit',
+    name: '小兔子',
+    type: 'pet',
+    price: 450,
+    sellPrice: 0,
+    icon: 'rabbit',
+    description: '一只萌萌的小兔子，心情好时会帮忙翻地',
+    petType: 'rabbit'
+  },
+  pet_food: {
+    id: 'pet_food',
+    name: '宠物饲料',
+    type: 'pet_food',
+    price: 30,
+    sellPrice: 10,
+    icon: 'pet_food',
+    description: '可以用来喂养宠物，恢复饱食度'
   }
 };
 
@@ -88,6 +127,36 @@ export const CROPS: Record<string, CropData> = {
     sellPrice: 100,
     seedPrice: 50
   }
+};
+
+export const WEATHER_CONFIG = {
+  sunny: {
+    name: '晴天',
+    icon: '☀️',
+    growthMultiplier: 1,
+    playerSpeedMultiplier: 1,
+    damageCrops: false
+  },
+  rainy: {
+    name: '雨天',
+    icon: '🌧️',
+    growthMultiplier: 2,
+    playerSpeedMultiplier: 0.8,
+    damageCrops: false
+  },
+  storm: {
+    name: '暴风雨',
+    icon: '⛈️',
+    growthMultiplier: 1.5,
+    playerSpeedMultiplier: 0.6,
+    damageCrops: true
+  }
+};
+
+export const PET_NAMES: Record<string, string[]> = {
+  cat: ['咪咪', '小花', '雪球', '橘子'],
+  dog: ['旺财', '小白', '大黄', '豆豆'],
+  rabbit: ['蹦蹦', '跳跳', '白雪', '灰灰']
 };
 
 export const INVENTORY_SIZE = 20;

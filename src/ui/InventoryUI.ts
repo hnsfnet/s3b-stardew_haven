@@ -13,6 +13,7 @@ export class InventoryUI {
   private dragSlot: number = -1;
   private dragSprite: Phaser.GameObjects.Sprite | null = null;
   private onItemSelected: ((itemId: string | null) => void) | null = null;
+  private onFeedPet: (() => boolean) | null = null;
 
   private slotSize = 48;
   private cols = 5;
@@ -103,7 +104,7 @@ export class InventoryUI {
       });
     }
 
-    const hintText = this.scene.add.text(0, bgHeight / 2 - 20, '点击选择种子 | 拖拽排序物品 | 按 I 关闭', {
+    const hintText = this.scene.add.text(0, bgHeight / 2 - 20, '点击选种子/用饲料 | 拖拽排序 | 按 I 关闭', {
       fontSize: '12px',
       color: '#aaaaaa',
       fontFamily: 'Microsoft YaHei'
@@ -127,12 +128,18 @@ export class InventoryUI {
 
     if (slot.itemId) {
       const item = ITEMS[slot.itemId];
-      if (item && item.type === 'seed') {
-        this.selectedSlot = index;
-        this.scene.registry.set('selectedSeed', slot.itemId);
-        this.updateSlotSelection();
-        if (this.onItemSelected) {
-          this.onItemSelected(slot.itemId);
+      if (item) {
+        if (item.type === 'seed') {
+          this.selectedSlot = index;
+          this.scene.registry.set('selectedSeed', slot.itemId);
+          this.updateSlotSelection();
+          if (this.onItemSelected) {
+            this.onItemSelected(slot.itemId);
+          }
+        } else if (item.type === 'pet_food') {
+          if (this.onFeedPet && this.onFeedPet()) {
+            this.removeItem(slot.itemId, 1);
+          }
         }
       }
     } else {
@@ -351,6 +358,10 @@ export class InventoryUI {
 
   setOnItemSelected(callback: (itemId: string | null) => void): void {
     this.onItemSelected = callback;
+  }
+
+  setOnFeedPet(callback: () => boolean): void {
+    this.onFeedPet = callback;
   }
 
   addItem(itemId: string, quantity: number = 1): boolean {

@@ -90,25 +90,27 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  update(input: DirectionInput): void {
+  update(input: DirectionInput, speedMultiplier: number = 1): void {
     if (!this.body) return;
+
+    const speed = this.moveSpeed * speedMultiplier;
 
     let velocityX = 0;
     let velocityY = 0;
 
     if (input.left) {
-      velocityX = -this.moveSpeed;
+      velocityX = -speed;
       this.direction = 'left';
     } else if (input.right) {
-      velocityX = this.moveSpeed;
+      velocityX = speed;
       this.direction = 'right';
     }
 
     if (input.up) {
-      velocityY = -this.moveSpeed;
+      velocityY = -speed;
       this.direction = 'up';
     } else if (input.down) {
-      velocityY = this.moveSpeed;
+      velocityY = speed;
       this.direction = 'down';
     }
 
