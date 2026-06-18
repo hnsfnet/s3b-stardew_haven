@@ -522,9 +522,18 @@ export class GameScene extends Phaser.Scene {
     const toDamage = Phaser.Utils.Array.Shuffle(matureCrops).slice(0, damageCount);
 
     for (const crop of toDamage) {
+      const cropData = CROPS[crop.cropId];
       this.farmMap.removeCrop(crop.tileX, crop.tileY);
+      
+      if (cropData && cropData.cropItemId) {
+        this.inventoryUI.addItem(cropData.cropItemId, 1);
+        this.showFloatingText('获得损坏补偿！', crop.tileX, crop.tileY, '#ffd700');
+      }
+      
       this.showFloatingText('作物被暴风雨摧毁！', crop.tileX, crop.tileY, '#ff0000');
     }
+
+    this.saveGameData();
   }
 
   private showDayTransition(day: number): void {

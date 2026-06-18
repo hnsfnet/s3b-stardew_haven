@@ -14,6 +14,10 @@ export class PetEntity {
   private moveSpeed: number = 100;
   private bounceOffset: number = 0;
   private bounceTimer: number = 0;
+  private moveTween: Phaser.Tweens.Tween | null = null;
+  private updateTimer: Phaser.Time.TimerEvent | null = null;
+  private currentPlayerX: number = 0;
+  private currentPlayerY: number = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: PetType, name?: string) {
     this.scene = scene;
@@ -36,6 +40,13 @@ export class PetEntity {
     this.targetY = y;
 
     this.randomizeFollowOffset();
+
+    this.updateTimer = scene.time.addEvent({
+      delay: 200,
+      callback: this.updateTargetPosition,
+      callbackScope: this,
+      loop: true
+    });
   }
 
   get x(): number {
@@ -66,51 +77,76 @@ export class PetEntity {
     this.followOffset.y = Math.sin(angle) * distance;
   }
 
+  private updateTargetPosition(): void {
+    if (!this.petData.isFollowing) return;
+
+    if (this.isPaused) {
+      this.pauseTimer -= 200;
+      if (this.pauseTimer <= 0) {
+        this.isPaused = false;
+        this.randomizeFollowOffset();
+      } else {
+        return;
+      }
+    }
+
+    if (Math.random() < 0.02) {
+      this.isPaused = true;
+      this.pauseTimer = 1000 + Math.random() * 2000;
+      return;
+    }
+
+    const idealX = this.currentPlayerX + this.followOffset.x;
+    const idealY = this.currentPlayerY + this.followOffset.y;
+
+    const dx = idealX - this.sprite.x;
+    const dy = idealY - this.sprite.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > 5) {
+      if (dx !== 0) {
+        this.sprite.setFlipX(dx < 0);
+      }
+
+      const duration = Math.max(150, (distance / this.moveSpeed) * 1000);
+
+      if (this.moveTween) {
+        this.moveTween.stop();
+      }
+
+      this.moveTween = this.scene.tweens.add({
+        targets: this.sprite,
+        x: idealX,
+        y: idealY,
+        duration: duration,
+        ease: 'Linear'
+      });
+    }
+
+    if (distance > 200) {
+      if (this.moveTween) {
+        this.moveTween.stop();
+      }
+      this.sprite.x = idealX;
+      this.sprite.y = idealY;
+      this.randomizeFollowOffset();
+    }
+  }
+
   update(playerX: number, playerY: number, delta: number): void {
+    this.currentPlayerX = playerX;
+    this.currentPlayerY = playerY;
+
     if (!this.petData.isFollowing) {
       this.sprite.setAlpha(0.5);
+      if (this.moveTween) {
+        this.moveTween.stop();
+        this.moveTween = null;
+      }
       return;
     }
 
     this.sprite.setAlpha(1);
-
-    if (this.isPaused) {
-      this.pauseTimer -= delta;
-      if (this.pauseTimer <= 0) {
-        this.isPaused = false;
-        this.randomizeFollowOffset();
-      }
-    } else {
-      if (Math.random() < 0.002) {
-        this.isPaused = true;
-        this.pauseTimer = 1000 + Math.random() * 2000;
-      }
-
-      const idealX = playerX + this.followOffset.x;
-      const idealY = playerY + this.followOffset.y;
-
-      const dx = idealX - this.sprite.x;
-      const dy = idealY - this.sprite.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > 5) {
-        const moveAmount = (this.moveSpeed * delta) / 1000;
-        const ratio = Math.min(moveAmount / distance, 1);
-
-        this.sprite.x += dx * ratio;
-        this.sprite.y += dy * ratio;
-
-        if (dx !== 0) {
-          this.sprite.setFlipX(dx < 0);
-        }
-      }
-
-      if (distance > 200) {
-        this.sprite.x = playerX + this.followOffset.x;
-        this.sprite.y = playerY + this.followOffset.y;
-        this.randomizeFollowOffset();
-      }
-    }
 
     this.bounceTimer += delta;
     if (this.bounceTimer > 150) {
@@ -118,7 +154,9 @@ export class PetEntity {
       this.bounceOffset = this.bounceOffset === 0 ? -2 : 0;
     }
 
-    this.sprite.y += this.bounceOffset * 0.1;
+    if (this.moveTween && this.moveTween.isPlaying()) {
+      this.sprite.y += this.bounceOffset * 0.1;
+    }
   }
 
   feed(): void {
@@ -195,6 +233,12 @@ export class PetEntity {
   }
 
   destroy(): void {
+    if (this.moveTween) {
+      this.moveTween.stop();
+    }
+    if (this.updateTimer) {
+      this.updateTimer.remove();
+    }
     this.sprite.destroy();
   }
 }

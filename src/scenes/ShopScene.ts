@@ -243,11 +243,11 @@ export class ShopScene extends Phaser.Scene {
 
       const sellBtn = this.add.graphics();
       sellBtn.fillStyle(0xf44336, 1);
-      sellBtn.fillRoundedRect(startX + 258, y + 14, 48, 28, 4);
+      sellBtn.fillRoundedRect(startX + 252, y + 14, 60, 28, 4);
       sellBtn.lineStyle(1, 0xef9a9a, 1);
-      sellBtn.strokeRoundedRect(startX + 258, y + 14, 48, 28, 4);
+      sellBtn.strokeRoundedRect(startX + 252, y + 14, 60, 28, 4);
 
-      const sellText = this.add.text(startX + 282, y + 28, '出售', {
+      const sellText = this.add.text(startX + 282, y + 28, '全部出售', {
         fontSize: '12px',
         color: '#ffffff',
         fontFamily: 'Microsoft YaHei'
@@ -387,30 +387,28 @@ export class ShopScene extends Phaser.Scene {
     const item = ITEMS[itemId];
     const inventory = this.registry.get('inventory') as InventorySlot[];
 
-    let sold = false;
+    let totalSold = 0;
+
     for (let i = 0; i < inventory.length; i++) {
       const slot = inventory[i];
       if (slot.itemId === itemId && slot.quantity > 0) {
-        slot.quantity--;
-        if (slot.quantity <= 0) {
-          slot.itemId = null;
-          slot.quantity = 0;
-        }
-        sold = true;
-        break;
+        totalSold += slot.quantity;
+        slot.itemId = null;
+        slot.quantity = 0;
       }
     }
 
-    if (!sold) {
+    if (totalSold <= 0) {
       this.showMessage('物品不存在！', '#ff6347');
       return;
     }
 
+    const totalGold = totalSold * item.sellPrice;
     const gold = this.registry.get('gold') as number;
-    this.registry.set('gold', gold + item.sellPrice);
+    this.registry.set('gold', gold + totalGold);
     this.registry.set('inventory', [...inventory]);
     this.updateGoldText();
-    this.showMessage(`出售了 ${item.name}，获得 ${item.sellPrice} 金币！`, '#7cfc00');
+    this.showMessage(`出售了 ${totalSold} 个 ${item.name}，获得 ${totalGold} 金币！`, '#7cfc00');
     this.refreshSellItems();
   }
 
