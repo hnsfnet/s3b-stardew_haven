@@ -1,0 +1,7 @@
+{
+  "installDir": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN",
+  "results": [
+    "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\resources\\app\\extensions\\npm\\dist\\npmMain.js",
+    "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\resources\\app\\extensions\\npm\\dist\\npmMain.js.LICENSE.txt"
+  ]
+}

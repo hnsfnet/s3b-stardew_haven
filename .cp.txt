@@ -1,0 +1,9 @@
+{
+  "corepack_path": "corepack-not-found",
+  "node_version": "v22.21.1",
+  "nodeDir": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN",
+  "corepack_exp": "",
+  "corepack_exp_err": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\Trae CN.exe: bad option: --experimental-corepack",
+  "cand_Programs_Trae CN_corepack.cmd": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\corepack.cmd",
+  "cand_corepack_dist_corepack.js": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\resources\\app\\node_modules\\corepack\\dist\\corepack.js"
+}

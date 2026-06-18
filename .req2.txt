@@ -1,0 +1,6 @@
+{
+  "corepack_e": "Error: Cannot find module 'corepack'\nRequire stack:\n- c:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1\\_req2.mjs",
+  "npm_e": "Error: Cannot find module 'npm'\nRequire stack:\n- c:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1\\_req2.mjs",
+  "nodePrefix": "none",
+  "npmRoot": "none"
+}

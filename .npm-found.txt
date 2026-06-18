@@ -1,0 +1,4 @@
+{
+  "found": [],
+  "cwd": "C:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1"
+}

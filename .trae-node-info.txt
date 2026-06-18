@@ -1,0 +1,5 @@
+{
+  "version": "v22.21.1",
+  "platform": "win32",
+  "cwd": "C:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1"
+}

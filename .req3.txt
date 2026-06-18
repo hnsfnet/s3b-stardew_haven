@@ -1,0 +1,10 @@
+{
+  "corepack_e": "Cannot find module 'corepack'\nRequire stack:\n- c:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1\\_req3.mjs",
+  "npm_e": "Cannot find module 'npm'\nRequire stack:\n- c:\\Users\\snail\\Documents\\TraeSolo\\repos\\repo-1\\_req3.mjs",
+  "npm_builtin": false,
+  "process_modules": [
+    "internal/http2/core"
+  ],
+  "execPath": "C:\\Users\\snail\\AppData\\Local\\Programs\\Trae CN\\Trae CN.exe",
+  "version": "v22.21.1"
+}

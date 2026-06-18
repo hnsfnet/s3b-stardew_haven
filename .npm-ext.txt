@@ -1,0 +1,9 @@
+D C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\dist
+F C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\dist\npmMain.js (335430)
+F C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\dist\npmMain.js.LICENSE.txt (464)
+D C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\images
+F C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\images\npm_icon.png (523)
+D C:\Users\snail\AppData\Local\Programs\Trae CN\resources\app\extensions\npm\l10n
+--- PKG: {"name":"npm","publisher":"vscode","displayName":"%displayName%","description":"%description%","version":"1.0.1","private":true,"license":"MIT","engines":{"vscode":"0.10.x"},"icon":"images/npm_icon.png","categories":["Other"],"enabledApiProposals":["terminalQuickFixProvider"],"main":"./dist/npmMain","browser":"./dist/browser/npmBrowserMain","activationEvents":["onTaskType:npm","onLanguage:json","workspaceContains:package.json"],"capabilities":{"virtualWorkspaces":{"supported":"limited","descript
+--- MAIN HEAD: /*! For license information please see npmMain.js.LICENSE.txt */
+(()=>{var e={8505:e=>{"use strict";function t(e,t,i){e instanceof RegExp&&(e=n(e,i)),t instanceof RegExp&&(t=n(t,i));var s=r(e,t,i);return s&&{start:s[0],end:s[1],pre:i.slice(0,s[0]),body:i.slice(s[0]+e.length,s[1]),post:i.slice(s[1]+t.length)}}function n(e,t){var n=t.match(e);return n?n[0]:null}function r(e,t,n){var r,i,s,o,a,u=n.indexOf(e),c=n.indexOf(t,u+1),l=u;if(u>=0&&c>0){for(r=[],s=n.length;l>=0&&!a;)l==u?(r.push(l),u=n.indexOf(e,l+1)):1==r.length?a=[r.pop(),c]:((i=r.pop())<s&&(s=i,o=c),c=n.indexOf(t,l+1)),l=u<c&&u>=0?u:c;r.length&&(a=[s,o])}return a}e.exports=t,t.range=r},8928:(e,t,n)=>{var r=n(8505);e.exports=function(e){return e?("{}"===e.substr(0,2)&&(e="\\{\\}"+e.substr(2)),g(function(e){return e.split("\\\\").joi
