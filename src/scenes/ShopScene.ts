@@ -1,18 +1,25 @@
 import Phaser from 'phaser';
-import { ITEMS, PET_NAMES } from '../data/items';
-import type { InventorySlot, Item, Pet } from '../types';
+import { GameStateManager } from '../state/GameStateManager';
+import { ConfigLoader, ItemConfig } from '../config/ConfigLoader';
+import type { Pet } from '../types';
 
 export class ShopScene extends Phaser.Scene {
   private goldText!: Phaser.GameObjects.Text;
-  private buyItems: Item[] = [];
+  private buyItems: ItemConfig[] = [];
   private sellItems: string[] = [];
   private messageText!: Phaser.GameObjects.Text;
+  private stateManager!: GameStateManager;
+  private config!: ConfigLoader;
 
   constructor() {
     super('ShopScene');
   }
 
   create(): void {
+    this.stateManager = GameStateManager.getInstance();
+    this.stateManager.setRegistry(this.registry);
+    this.config = ConfigLoader.getInstance();
+
     const { width, height } = this.scale;
 
     const bg = this.add.graphics();
@@ -63,15 +70,7 @@ export class ShopScene extends Phaser.Scene {
     });
     buyTitle.setOrigin(0.5);
 
-    this.buyItems = [
-      ITEMS.potato_seed,
-      ITEMS.carrot_seed,
-      ITEMS.pumpkin_seed,
-      ITEMS.pet_food,
-      ITEMS.cat,
-      ITEMS.dog,
-      ITEMS.rabbit
-    ];
+    this.buyItems = this.config.getShopItems();
 
     this.createBuyItems(buyPanelX, buyPanelY + 40);
 
@@ -190,12 +189,12 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private createSellItems(startX: number, startY: number): void {
-    const inventory = this.registry.get('inventory') as InventorySlot[];
+    const inventory = this.stateManager.inventory;
     this.sellItems = [];
 
     inventory.forEach((slot) => {
       if (slot.itemId && slot.quantity > 0) {
-        const item = ITEMS[slot.itemId];
+        const item = this.config.getItem(slot.itemId);
         if (item && item.type === 'crop') {
           if (!this.sellItems.includes(slot.itemId)) {
             this.sellItems.push(slot.itemId);
@@ -211,7 +210,8 @@ export class ShopScene extends Phaser.Scene {
       if (index >= 6) return;
 
       const y = startY + index * (itemHeight + spacing);
-      const item = ITEMS[itemId];
+      const item = this.config.getItem(itemId);
+      if (!item) return;
 
       const itemBg = this.add.graphics();
       itemBg.fillStyle(0x3d2817, 1);
@@ -290,23 +290,14 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private getItemCount(itemId: string): number {
-    const inventory = this.registry.get('inventory') as InventorySlot[];
-    let count = 0;
-
-    for (const slot of inventory) {
-      if (slot.itemId === itemId) {
-        count += slot.quantity;
-      }
-    }
-
-    return count;
+    return this.stateManager.getItemCount(itemId);
   }
 
   private buyItem(itemId: string): void {
-    const item = ITEMS[itemId];
-    const gold = this.registry.get('gold') as number;
+    const item = this.config.getItem(itemId);
+    if (!item) return;
 
-    if (gold < item.price) {
+    if (!this.stateManager.spendGold(item.price)) {
       this.showMessage('金币不足！', '#ff6347');
       return;
     }
@@ -316,97 +307,62 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
 
-    const inventory = this.registry.get('inventory') as InventorySlot[];
-    let added = false;
-
-    for (let i = 0; i < inventory.length; i++) {
-      const slot = inventory[i];
-      if (slot.itemId === itemId && slot.quantity > 0) {
-        slot.quantity++;
-        added = true;
-        break;
-      }
-    }
-
-    if (!added) {
-      for (let i = 0; i < inventory.length; i++) {
-        const slot = inventory[i];
-        if (!slot.itemId || slot.quantity === 0) {
-          slot.itemId = itemId;
-          slot.quantity = 1;
-          added = true;
-          break;
-        }
-      }
-    }
-
-    if (!added) {
+    if (!this.stateManager.addItem(itemId, 1)) {
+      this.stateManager.addGold(item.price);
       this.showMessage('背包已满！', '#ff6347');
       return;
     }
 
-    this.registry.set('gold', gold - item.price);
-    this.registry.set('inventory', [...inventory]);
     this.updateGoldText();
     this.showMessage(`购买了 ${item.name}！`, '#7cfc00');
   }
 
   private buyPet(itemId: string): void {
-    const item = ITEMS[itemId];
-    const gold = this.registry.get('gold') as number;
-    const pets = this.registry.get('pets') as Pet[];
+    const item = this.config.getItem(itemId);
+    if (!item || !item.petType) return;
 
-    if (pets.some(p => p.type === item.petType)) {
-      this.showMessage(`你已经有一只${item.name}了！`, '#ff6347');
+    const petConfig = this.config.getPet(item.petType);
+    if (!petConfig) return;
+
+    if (this.stateManager.hasPetType(item.petType)) {
+      this.stateManager.addGold(item.price);
+      this.showMessage(`你已经有一只${petConfig.name}了！`, '#ff6347');
       return;
     }
 
-    const petType = item.petType!;
-    const names = PET_NAMES[petType];
-    const randomName = names[Math.floor(Math.random() * names.length)];
+    const randomName = petConfig.names[Math.floor(Math.random() * petConfig.names.length)];
 
     const newPet: Pet = {
       id: Phaser.Utils.String.UUID(),
-      type: petType,
+      type: item.petType,
       name: randomName,
       mood: 80,
       hunger: 100,
       isFollowing: true,
       helpedToday: false,
-      lastFedDay: this.registry.get('day') as number
+      lastFedDay: this.stateManager.day
     };
 
-    pets.push(newPet);
-    this.registry.set('pets', [...pets]);
-    this.registry.set('gold', gold - item.price);
+    this.stateManager.addPet(newPet);
     this.updateGoldText();
-    this.showMessage(`购买了 ${item.name}「${randomName}」！`, '#7cfc00');
+    this.showMessage(`购买了 ${petConfig.name}「${randomName}」！`, '#7cfc00');
   }
 
   private sellItem(itemId: string): void {
-    const item = ITEMS[itemId];
-    const inventory = this.registry.get('inventory') as InventorySlot[];
+    const item = this.config.getItem(itemId);
+    if (!item) return;
 
-    let totalSold = 0;
-
-    for (let i = 0; i < inventory.length; i++) {
-      const slot = inventory[i];
-      if (slot.itemId === itemId && slot.quantity > 0) {
-        totalSold += slot.quantity;
-        slot.itemId = null;
-        slot.quantity = 0;
-      }
-    }
-
+    const totalSold = this.stateManager.getItemCount(itemId);
     if (totalSold <= 0) {
       this.showMessage('物品不存在！', '#ff6347');
       return;
     }
 
     const totalGold = totalSold * item.sellPrice;
-    const gold = this.registry.get('gold') as number;
-    this.registry.set('gold', gold + totalGold);
-    this.registry.set('inventory', [...inventory]);
+
+    this.stateManager.removeItem(itemId, totalSold);
+    this.stateManager.addGold(totalGold);
+
     this.updateGoldText();
     this.showMessage(`出售了 ${totalSold} 个 ${item.name}，获得 ${totalGold} 金币！`, '#7cfc00');
     this.refreshSellItems();
@@ -527,7 +483,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private updateGoldText(): void {
-    const gold = this.registry.get('gold') as number;
+    const gold = this.stateManager.gold;
     this.goldText.setText(`💰 金币: ${gold}`);
   }
 

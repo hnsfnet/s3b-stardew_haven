@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { Pet, PetType } from '../types';
-import { PET_NAMES } from '../data/items';
+import { ConfigLoader } from '../config/ConfigLoader';
 
 export class PetEntity {
   private scene: Phaser.Scene;
@@ -25,7 +25,7 @@ export class PetEntity {
     this.petData = {
       id: Phaser.Utils.String.UUID(),
       type: type,
-      name: name || PET_NAMES[type][Math.floor(Math.random() * PET_NAMES[type].length)],
+      name: name || this.getRandomName(type),
       mood: 80,
       hunger: 80,
       isFollowing: true,
@@ -68,6 +68,14 @@ export class PetEntity {
   setData(data: Pet): void {
     this.petData = { ...data };
     this.sprite.setTexture(data.type);
+  }
+
+  private getRandomName(type: PetType): string {
+    const petConfig = ConfigLoader.getInstance().getPet(type);
+    if (petConfig && petConfig.names.length > 0) {
+      return petConfig.names[Math.floor(Math.random() * petConfig.names.length)];
+    }
+    return '小伙伴';
   }
 
   private randomizeFollowOffset(): void {

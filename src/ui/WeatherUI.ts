@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { WeatherType } from '../types';
-import { WEATHER_CONFIG } from '../data/items';
+import { ConfigLoader } from '../config/ConfigLoader';
 import { WeatherSystem } from '../systems/WeatherSystem';
 
 export class WeatherUI {
@@ -51,7 +51,8 @@ export class WeatherUI {
 
   updateWeather(weather: WeatherType): void {
     this.currentWeather = weather;
-    const config = WEATHER_CONFIG[weather];
+    const config = ConfigLoader.getInstance().getWeather(weather);
+    if (!config) return;
 
     this.iconText.setText(config.icon);
     this.nameText.setText(config.name);

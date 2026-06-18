@@ -1,0 +1,41 @@
+{
+  "potato": {
+    "id": "potato",
+    "name": "土豆",
+    "seedItemId": "potato_seed",
+    "cropItemId": "potato_crop",
+    "seedPrice": 20,
+    "sellPrice": 35,
+    "growthDays": 6,
+    "growthStages": 4,
+    "daysPerStage": 2,
+    "color": "#d2b48c",
+    "description": "种植时间6天，售价35金币"
+  },
+  "carrot": {
+    "id": "carrot",
+    "name": "胡萝卜",
+    "seedItemId": "carrot_seed",
+    "cropItemId": "carrot_crop",
+    "seedPrice": 30,
+    "sellPrice": 50,
+    "growthDays": 9,
+    "growthStages": 4,
+    "daysPerStage": 3,
+    "color": "#ff8c00",
+    "description": "种植时间9天，售价50金币"
+  },
+  "pumpkin": {
+    "id": "pumpkin",
+    "name": "南瓜",
+    "seedItemId": "pumpkin_seed",
+    "cropItemId": "pumpkin_crop",
+    "seedPrice": 50,
+    "sellPrice": 100,
+    "growthDays": 12,
+    "growthStages": 4,
+    "daysPerStage": 4,
+    "color": "#ff6600",
+    "description": "种植时间12天，售价100金币"
+  }
+}

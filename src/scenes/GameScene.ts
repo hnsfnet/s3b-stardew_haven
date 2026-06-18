@@ -5,8 +5,9 @@ import { PetEntity } from '../entities/PetEntity';
 import { WeatherSystem } from '../systems/WeatherSystem';
 import { InventoryUI } from '../ui/InventoryUI';
 import { WeatherUI } from '../ui/WeatherUI';
-import { ITEMS, CROPS, WEATHER_CONFIG } from '../data/items';
-import type { InventorySlot, PlantedCrop, Pet, PetType, WeatherType } from '../types';
+import { GameStateManager } from '../state/GameStateManager';
+import { ConfigLoader } from '../config/ConfigLoader';
+import type { PetType } from '../types';
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -15,6 +16,8 @@ export class GameScene extends Phaser.Scene {
   private weatherSystem!: WeatherSystem;
   private weatherUI!: WeatherUI;
   private inventoryUI!: InventoryUI;
+  private stateManager!: GameStateManager;
+  private config!: ConfigLoader;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys!: {
     up: Phaser.Input.Keyboard.Key;
@@ -40,6 +43,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.stateManager = GameStateManager.getInstance();
+    this.stateManager.setRegistry(this.registry);
+    this.config = ConfigLoader.getInstance();
+
     this.farmMap = new FarmMap(this);
 
     const startPos = this.farmMap.getPlayerStartPosition();
@@ -87,7 +94,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadPetsFromRegistry(): void {
-    const petDataList = this.registry.get('pets') as Pet[];
+    const petDataList = this.stateManager.pets;
     if (petDataList) {
       for (const petData of petDataList) {
         const pet = new PetEntity(
@@ -104,8 +111,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private savePetsToRegistry(): void {
-    const petDataList: Pet[] = this.pets.map((pet) => pet.getData());
-    this.registry.set('pets', petDataList);
+    const petDataList = this.pets.map((pet) => pet.getData());
+    this.stateManager.pets = petDataList;
   }
 
   private createInput(): void {
@@ -176,7 +183,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateHUD(): void {
-    const day = this.registry.get('day') as number;
+    const day = this.stateManager.day;
     const timePercent = this.gameTime / this.dayDuration;
     const hour = Math.floor(6 + timePercent * 12);
     const minute = Math.floor((timePercent * 12 * 60) % 60);
@@ -184,12 +191,12 @@ export class GameScene extends Phaser.Scene {
 
     this.dayTimeText.setText(`第 ${day} 天  ${timeStr}`);
 
-    const gold = this.registry.get('gold') as number;
+    const gold = this.stateManager.gold;
     this.goldText.setText(`💰 ${gold}`);
 
-    const selectedSeed = this.registry.get('selectedSeed') as string | null;
+    const selectedSeed = this.stateManager.selectedSeed;
     if (selectedSeed) {
-      const item = ITEMS[selectedSeed];
+      const item = this.config.getItem(selectedSeed);
       if (item) {
         this.selectedSeedText.setText(`已选种子: ${item.name}`);
       }
@@ -222,7 +229,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const selectedSeed = this.registry.get('selectedSeed') as string | null;
+    const selectedSeed = this.stateManager.selectedSeed;
     if (selectedSeed) {
       this.plantSeed(facingTile.x, facingTile.y, selectedSeed);
     }
@@ -236,43 +243,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private plantSeed(tileX: number, tileY: number, seedItemId: string): boolean {
-    const seedItem = ITEMS[seedItemId];
+    const seedItem = this.config.getItem(seedItemId);
     if (!seedItem || seedItem.type !== 'seed') return false;
 
-    const inventory = this.registry.get('inventory') as InventorySlot[];
-    let hasSeed = false;
-
-    for (const slot of inventory) {
-      if (slot.itemId === seedItemId && slot.quantity > 0) {
-        hasSeed = true;
-        break;
-      }
-    }
-
-    if (!hasSeed) {
+    if (!this.stateManager.hasItem(seedItemId, 1)) {
       this.showFloatingText('没有种子了！', tileX, tileY, '#ff6347');
       return false;
     }
 
-    let cropId = '';
-    for (const [id, crop] of Object.entries(CROPS)) {
-      if (crop.seedItemId === seedItemId) {
-        cropId = id;
-        break;
-      }
-    }
-
+    const cropId = seedItem.cropId;
     if (!cropId) return false;
 
-    const currentDay = this.registry.get('day') as number;
+    const cropConfig = this.config.getCrop(cropId);
+    if (!cropConfig) return false;
+
+    const currentDay = this.stateManager.day;
     if (!this.farmMap.plantCrop(tileX, tileY, cropId, currentDay)) {
       return false;
     }
 
-    this.inventoryUI.removeItem(seedItemId, 1);
+    this.stateManager.removeItem(seedItemId, 1);
+    this.inventoryUI.updateInventoryUI();
 
-    const crop = CROPS[cropId];
-    this.showFloatingText(`种植${crop.name}！`, tileX, tileY, '#7cfc00');
+    this.showFloatingText(`种植${cropConfig.name}！`, tileX, tileY, '#7cfc00');
 
     this.saveGameData();
     return true;
@@ -281,9 +274,12 @@ export class GameScene extends Phaser.Scene {
   private harvestCrop(tileX: number, tileY: number): void {
     const cropItemId = this.farmMap.harvestCrop(tileX, tileY);
     if (cropItemId) {
-      if (this.inventoryUI.addItem(cropItemId, 1)) {
-        const item = ITEMS[cropItemId];
-        this.showFloatingText(`收获${item.name}！`, tileX, tileY, '#7cfc00');
+      if (this.stateManager.addItem(cropItemId, 1)) {
+        this.inventoryUI.updateInventoryUI();
+        const item = this.config.getItem(cropItemId);
+        if (item) {
+          this.showFloatingText(`收获${item.name}！`, tileX, tileY, '#7cfc00');
+        }
       } else {
         this.showFloatingText('背包已满！', tileX, tileY, '#ff6347');
       }
@@ -392,7 +388,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private checkNewPets(): void {
-    const petDataList = this.registry.get('pets') as Pet[];
+    const petDataList = this.stateManager.pets;
     if (!petDataList) return;
 
     for (const petData of petDataList) {
@@ -437,17 +433,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateSelectedSeedText(itemId: string | null): void {
-    this.registry.set('selectedSeed', itemId);
+    this.stateManager.selectedSeed = itemId;
     this.updateHUD();
   }
 
   private advanceDay(): void {
-    const currentDay = this.registry.get('day') as number;
+    const currentDay = this.stateManager.day;
     const newDay = currentDay + 1;
-    this.registry.set('day', newDay);
+    this.stateManager.day = newDay;
 
-    const weatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
-    this.farmMap.advanceDay(newDay, weatherConfig.growthMultiplier);
+    const currentWeather = this.weatherSystem.getCurrentWeather();
+    const weatherCfg = this.config.getWeather(currentWeather);
+    const growthMultiplier = weatherCfg?.growthMultiplier || 1;
+    this.farmMap.advanceDay(newDay, growthMultiplier);
 
     for (const pet of this.pets) {
       pet.advanceDay();
@@ -458,9 +456,10 @@ export class GameScene extends Phaser.Scene {
 
     this.weatherSystem.advanceDay();
 
-    const newWeatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
-    if (newWeatherConfig.damageCrops) {
-      this.damageMatureCrops();
+    const newWeather = this.weatherSystem.getCurrentWeather();
+    const newWeatherCfg = this.config.getWeather(newWeather);
+    if (newWeatherCfg?.damageCrops) {
+      this.damageMatureCrops(newWeatherCfg);
     }
 
     this.savePetsToRegistry();
@@ -508,28 +507,38 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private damageMatureCrops(): void {
+  private damageMatureCrops(weatherConfig: {
+    damageChance: number;
+    damageCountMin: number;
+    damageCountMax: number;
+  }): void {
+    if (Math.random() > weatherConfig.damageChance) return;
+
     const allCrops = this.farmMap.getAllCrops();
     const matureCrops = allCrops.filter((crop) => {
-      const cropData = CROPS[crop.cropId];
-      const daysGrown = this.registry.get('day') - crop.plantedDay;
-      return daysGrown >= cropData.growthDays;
+      const cropConfig = this.config.getCrop(crop.cropId);
+      if (!cropConfig) return false;
+      return crop.growthProgress >= cropConfig.growthDays;
     });
 
     if (matureCrops.length === 0) return;
 
-    const damageCount = Phaser.Math.Between(1, 2);
+    const damageCount = Phaser.Math.Between(
+      weatherConfig.damageCountMin,
+      weatherConfig.damageCountMax
+    );
     const toDamage = Phaser.Utils.Array.Shuffle(matureCrops).slice(0, damageCount);
 
     for (const crop of toDamage) {
-      const cropData = CROPS[crop.cropId];
+      const cropConfig = this.config.getCrop(crop.cropId);
       this.farmMap.removeCrop(crop.tileX, crop.tileY);
-      
-      if (cropData && cropData.cropItemId) {
-        this.inventoryUI.addItem(cropData.cropItemId, 1);
+
+      if (cropConfig && cropConfig.cropItemId) {
+        this.stateManager.addItem(cropConfig.cropItemId, 1);
+        this.inventoryUI.updateInventoryUI();
         this.showFloatingText('获得损坏补偿！', crop.tileX, crop.tileY, '#ffd700');
       }
-      
+
       this.showFloatingText('作物被暴风雨摧毁！', crop.tileX, crop.tileY, '#ff0000');
     }
 
@@ -568,61 +577,36 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadGameData(): void {
-    const savedData = localStorage.getItem('stardew_farm_save');
+    const savedData = this.stateManager.load();
     if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
-        this.registry.set('gold', data.gold || 100);
-        this.registry.set('day', data.day || 1);
+      this.stateManager.applySaveData(savedData);
 
-        if (data.inventory) {
-          this.registry.set('inventory', data.inventory);
-        }
-
-        if (data.pets) {
-          this.registry.set('pets', data.pets);
-        }
-
-        if (data.weather) {
-          this.registry.set('weather', data.weather);
-        }
-
-        if (data.tilledTiles) {
-          this.farmMap.loadTilledTiles(data.tilledTiles);
-        }
-
-        if (data.plantedCrops) {
-          this.farmMap.loadCrops(data.plantedCrops);
-        }
-
-        this.updateHUD();
-      } catch (e) {
-        console.error('Failed to load save data:', e);
+      if (savedData.tilledTiles) {
+        this.farmMap.loadTilledTiles(savedData.tilledTiles);
       }
+
+      if (savedData.plantedCrops) {
+        this.farmMap.loadCrops(savedData.plantedCrops);
+      }
+
+      this.updateHUD();
     }
   }
 
   private saveGameData(): void {
     this.savePetsToRegistry();
-
-    const data = {
-      gold: this.registry.get('gold'),
-      day: this.registry.get('day'),
-      inventory: this.registry.get('inventory'),
-      pets: this.registry.get('pets'),
-      weather: this.registry.get('weather'),
-      tilledTiles: this.farmMap.getTilledTiles(),
-      plantedCrops: this.farmMap.getAllCrops()
-    };
-
-    localStorage.setItem('stardew_farm_save', JSON.stringify(data));
+    this.stateManager.save(
+      this.farmMap.getTilledTiles(),
+      this.farmMap.getAllCrops()
+    );
   }
 
   update(_time: number, delta: number): void {
     if (this.isPaused) return;
 
-    const weatherConfig = WEATHER_CONFIG[this.weatherSystem.getCurrentWeather()];
-    const speedMultiplier = weatherConfig.playerSpeedMultiplier;
+    const currentWeather = this.weatherSystem.getCurrentWeather();
+    const weatherCfg = this.config.getWeather(currentWeather);
+    const speedMultiplier = weatherCfg?.playerSpeedMultiplier || 1;
 
     const directionInput = {
       up: this.wasdKeys.up.isDown || this.cursors.up?.isDown || false,

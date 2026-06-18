@@ -1,0 +1,98 @@
+{
+  "potato_seed": {
+    "id": "potato_seed",
+    "name": "土豆种子",
+    "type": "seed",
+    "price": 20,
+    "sellPrice": 8,
+    "description": "可种植土豆",
+    "cropId": "potato",
+    "color": "#d2b48c"
+  },
+  "carrot_seed": {
+    "id": "carrot_seed",
+    "name": "胡萝卜种子",
+    "type": "seed",
+    "price": 30,
+    "sellPrice": 12,
+    "description": "可种植胡萝卜",
+    "cropId": "carrot",
+    "color": "#ff8c00"
+  },
+  "pumpkin_seed": {
+    "id": "pumpkin_seed",
+    "name": "南瓜种子",
+    "type": "seed",
+    "price": 50,
+    "sellPrice": 20,
+    "description": "可种植南瓜",
+    "cropId": "pumpkin",
+    "color": "#ff6600"
+  },
+  "potato_crop": {
+    "id": "potato_crop",
+    "name": "土豆",
+    "type": "crop",
+    "price": 35,
+    "sellPrice": 35,
+    "description": "收获的土豆，可出售",
+    "color": "#d2b48c"
+  },
+  "carrot_crop": {
+    "id": "carrot_crop",
+    "name": "胡萝卜",
+    "type": "crop",
+    "price": 50,
+    "sellPrice": 50,
+    "description": "收获的胡萝卜，可出售",
+    "color": "#ff8c00"
+  },
+  "pumpkin_crop": {
+    "id": "pumpkin_crop",
+    "name": "南瓜",
+    "type": "crop",
+    "price": 100,
+    "sellPrice": 100,
+    "description": "收获的南瓜，可出售",
+    "color": "#ff6600"
+  },
+  "pet_food": {
+    "id": "pet_food",
+    "name": "宠物饲料",
+    "type": "pet_food",
+    "price": 15,
+    "sellPrice": 5,
+    "description": "可用来喂养宠物，恢复饱食度和心情",
+    "color": "#8b4513"
+  },
+  "cat_pet": {
+    "id": "cat_pet",
+    "name": "小猫",
+    "type": "pet",
+    "price": 500,
+    "sellPrice": 100,
+    "description": "可爱的小猫，会跟随你并偶尔帮忙翻地",
+    "petType": "cat",
+    "color": "#ffa500"
+  },
+  "dog_pet": {
+    "id": "dog_pet",
+    "name": "小狗",
+    "type": "pet",
+    "price": 600,
+    "sellPrice": 120,
+    "description": "忠诚的小狗，会跟随你并偶尔帮忙翻地",
+    "petType": "dog",
+    "color": "#8b4513"
+  },
+  "rabbit_pet": {
+    "id": "rabbit_pet",
+    "name": "小兔",
+    "type": "pet",
+    "price": 400,
+    "sellPrice": 80,
+    "description": "可爱的小兔，会跟随你并偶尔帮忙翻地",
+    "petType": "rabbit",
+    "color": "#ffffff"
+  }
+}

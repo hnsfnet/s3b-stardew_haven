@@ -1,0 +1,44 @@
+{
+  "cat": {
+    "type": "cat",
+    "name": "猫",
+    "price": 500,
+    "followSpeed": 100,
+    "moodDecayPerDay": 5,
+    "hungerDecayPerDay": 30,
+    "feedHungerRestore": 40,
+    "feedMoodBoost": 10,
+    "helpTillChance": 0.4,
+    "helpTillMoodThreshold": 70,
+    "helpTillHungerThreshold": 30,
+    "names": ["咪咪", "喵喵", "橘橘", "花花", "黑炭", "雪球", "豆豆", "布丁"]
+  },
+  "dog": {
+    "type": "dog",
+    "name": "狗",
+    "price": 600,
+    "followSpeed": 120,
+    "moodDecayPerDay": 5,
+    "hungerDecayPerDay": 30,
+    "feedHungerRestore": 40,
+    "feedMoodBoost": 10,
+    "helpTillChance": 0.45,
+    "helpTillMoodThreshold": 70,
+    "helpTillHungerThreshold": 30,
+    "names": ["旺财", "小白", "大黄", "豆豆", "阿福", "小黑", "毛毛", "欢欢"]
+  },
+  "rabbit": {
+    "type": "rabbit",
+    "name": "兔子",
+    "price": 400,
+    "followSpeed": 90,
+    "moodDecayPerDay": 5,
+    "hungerDecayPerDay": 25,
+    "feedHungerRestore": 40,
+    "feedMoodBoost": 10,
+    "helpTillChance": 0.35,
+    "helpTillMoodThreshold": 70,
+    "helpTillHungerThreshold": 30,
+    "names": ["兔兔", "小白", "灰灰", "跳跳", "萝卜", "棉花", "雪球", "毛毛"]
+  }
+}

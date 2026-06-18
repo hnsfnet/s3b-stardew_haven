@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { TileType, PlantedCrop } from '../types';
-import { CROPS } from '../data/items';
+import { ConfigLoader } from '../config/ConfigLoader';
 
 const TILE_SIZE = 32;
 const MAP_WIDTH = 30;
@@ -236,7 +236,7 @@ export class FarmMap {
     crop.growthProgress = (crop.growthProgress || 0) + growthMultiplier;
     crop.currentDay = currentDay;
 
-    const cropData = CROPS[crop.cropId];
+    const cropData = ConfigLoader.getInstance().getCrop(crop.cropId);
     if (!cropData) {
       crop.stage = 'seed';
       this.updateCropSprite(crop);

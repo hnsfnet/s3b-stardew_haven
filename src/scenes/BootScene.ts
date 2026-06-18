@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TextureGenerator } from '../utils/TextureGenerator';
-import { INVENTORY_SIZE } from '../data/items';
-import type { InventorySlot, PlantedCrop, Pet, WeatherState } from '../types';
+import { GameStateManager } from '../state/GameStateManager';
+import { ConfigLoader } from '../config/ConfigLoader';
 
 export class BootScene extends Phaser.Scene {
   private loadingBar!: Phaser.GameObjects.Graphics;
@@ -89,36 +89,27 @@ export class BootScene extends Phaser.Scene {
   }
 
   private initRegistry(): void {
-    const inventory: InventorySlot[] = [];
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
-      inventory.push({
-        itemId: null,
-        quantity: 0
-      });
+    const stateManager = GameStateManager.getInstance();
+    stateManager.setRegistry(this.registry);
+    ConfigLoader.getInstance();
+
+    const savedData = stateManager.load();
+    if (savedData) {
+      stateManager.applySaveData(savedData);
+    } else {
+      stateManager.gold = 100;
+      stateManager.day = 1;
+      stateManager.initDefaultInventory();
+      stateManager.pets = [];
+      stateManager.weather = {
+        current: 'sunny',
+        yesterday: 'sunny',
+        transitioning: false
+      };
+      stateManager.selectedSeed = null;
     }
 
-    inventory[0] = { itemId: 'potato_seed', quantity: 5 };
-    inventory[1] = { itemId: 'carrot_seed', quantity: 3 };
-    inventory[2] = { itemId: 'pumpkin_seed', quantity: 2 };
-    inventory[3] = { itemId: 'pet_food', quantity: 3 };
-
-    const plantedCrops: PlantedCrop[] = [];
-    const pets: Pet[] = [];
-
-    const weather: WeatherState = {
-      current: 'sunny',
-      yesterday: 'sunny',
-      transitioning: false
-    };
-
-    this.registry.set('gold', 100);
-    this.registry.set('day', 1);
     this.registry.set('time', 0);
-    this.registry.set('inventory', inventory);
-    this.registry.set('plantedCrops', plantedCrops);
-    this.registry.set('pets', pets);
-    this.registry.set('weather', weather);
-    this.registry.set('selectedSeed', null);
     this.registry.set('gamePaused', false);
   }
 }

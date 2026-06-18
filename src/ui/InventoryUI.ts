@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { InventorySlot } from '../types';
-import { ITEMS, INVENTORY_SIZE } from '../data/items';
+import { ConfigLoader } from '../config/ConfigLoader';
 
 export class InventoryUI {
   private scene: Phaser.Scene;
@@ -50,7 +50,7 @@ export class InventoryUI {
     const startX = -(this.cols * this.slotSize) / 2 + this.slotSize / 2;
     const startY = -bgHeight / 2 + 50;
 
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
+    for (let i = 0; i < this.cols * this.rows; i++) {
       const col = i % this.cols;
       const row = Math.floor(i / this.cols);
       const x = startX + col * this.slotSize;
@@ -127,7 +127,7 @@ export class InventoryUI {
     }
 
     if (slot.itemId) {
-      const item = ITEMS[slot.itemId];
+      const item = ConfigLoader.getInstance().getItem(slot.itemId);
       if (item) {
         if (item.type === 'seed') {
           this.selectedSlot = index;
@@ -292,7 +292,7 @@ export class InventoryUI {
   updateInventoryUI(): void {
     const inventory = this.scene.registry.get('inventory') as InventorySlot[];
 
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
+    for (let i = 0; i < this.cols * this.rows; i++) {
       const slot = inventory[i];
       const itemSprite = this.itemSprites[i];
       const quantityText = this.quantityTexts[i];
@@ -367,7 +367,7 @@ export class InventoryUI {
   addItem(itemId: string, quantity: number = 1): boolean {
     const inventory = this.scene.registry.get('inventory') as InventorySlot[];
 
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
+    for (let i = 0; i < this.cols * this.rows; i++) {
       const slot = inventory[i];
       if (slot.itemId === itemId && slot.quantity > 0) {
         slot.quantity += quantity;
@@ -377,7 +377,7 @@ export class InventoryUI {
       }
     }
 
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
+    for (let i = 0; i < this.cols * this.rows; i++) {
       const slot = inventory[i];
       if (!slot.itemId || slot.quantity === 0) {
         slot.itemId = itemId;
@@ -394,7 +394,7 @@ export class InventoryUI {
   removeItem(itemId: string, quantity: number = 1): boolean {
     const inventory = this.scene.registry.get('inventory') as InventorySlot[];
 
-    for (let i = 0; i < INVENTORY_SIZE; i++) {
+    for (let i = 0; i < this.cols * this.rows; i++) {
       const slot = inventory[i];
       if (slot.itemId === itemId && slot.quantity >= quantity) {
         slot.quantity -= quantity;

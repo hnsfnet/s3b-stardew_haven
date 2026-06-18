@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { WeatherType, WeatherState } from '../types';
-import { WEATHER_CONFIG } from '../data/items';
+import { ConfigLoader } from '../config/ConfigLoader';
 
 export class WeatherSystem {
   private scene: Phaser.Scene;
@@ -190,7 +190,8 @@ export class WeatherSystem {
   }
 
   getWeatherConfig() {
-    return WEATHER_CONFIG[this.state.current];
+    const config = ConfigLoader.getInstance();
+    return config.getWeather(this.state.current);
   }
 
   getState(): WeatherState {
